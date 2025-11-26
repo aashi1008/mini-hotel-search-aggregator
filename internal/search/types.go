@@ -1,6 +1,10 @@
 package search
 
-import "context"
+import (
+	"context"
+
+	"github.com/example/mini-hotel-aggregator/internal/models"
+)
 
 type Hotel struct {
 	HotelID  string  `json:"hotel_id"`
@@ -28,6 +32,6 @@ type AggregatedResult struct {
 }
 
 type Provider interface {
-	Search(ctx context.Context, city, checkin string, nights, adults int) ([]Hotel, error)
+	Search(ctx context.Context, req *models.SearchRequest) ([]Hotel, error)
 	Name() string
 }

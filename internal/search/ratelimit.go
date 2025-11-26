@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type RateLimiter interface {
+    Allow(ip string) bool
+}
+
 // Simple token bucket per IP
 type ipBucket struct {
 	tokens     int

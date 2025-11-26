@@ -2,13 +2,18 @@ package providers
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"math/rand"
 	"time"
 
+	"github.com/example/mini-hotel-aggregator/internal/models"
 	"github.com/example/mini-hotel-aggregator/internal/search"
 )
+
+type Provider interface {
+    Search(ctx context.Context, req *models.SearchRequest) ([]search.Hotel, error)
+    Name() string
+}
 
 type MockProvider struct {
 	name       string
@@ -24,24 +29,31 @@ func NewMockProvider(name string, avgLatency, failRate float64, seedOffset int64
 
 func (m *MockProvider) Name() string { return m.name }
 
-func (m *MockProvider) Search(ctx context.Context, city, checkin string, nights, adults int) ([]search.Hotel, error) {
+func (m *MockProvider) Search(ctx context.Context, req *models.SearchRequest) ([]search.Hotel, error) {
 	// variable latency and context cancelable
 	select {
-	case <-time.After(sampleLatencyFromRng(m.rng, m.avgLatency)):
+	case <-time.After(SampleLatencyFromRng(m.rng, m.avgLatency)):
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-	if shouldFailFromRng(m.rng, m.failRate) {
+	if ShouldFailFromRng(m.rng, m.failRate) {
 		return nil, errors.New("provider error (simulated)")
 	}
 
 	hotels := []search.Hotel{
-		{HotelID: "H123", Name: "Hotel Atlas", City: city, Currency: "EUR", Price: 129.90 + float64(m.rng.Intn(30)), Nights: nights},
-		{HotelID: "H234", Name: "Riad Sunset", City: city, Currency: "EUR", Price: 99.50 + float64(m.rng.Intn(100)), Nights: nights},
-		{HotelID: "H345", Name: "Kasbah Pearl", City: city, Currency: "EUR", Price: 132.00 + float64(m.rng.Intn(40)), Nights: nights},
+		{HotelID: "H123", Name: "Hotel Atlas", City: req.City, Currency: "EUR", Price: 129.90 + float64(m.rng.Intn(30)), Nights: req.Nights},
+		{HotelID: "H234", Name: "Riad Sunset", City: req.City, Currency: "EUR", Price: 99.50 + float64(m.rng.Intn(100)), Nights: req.Nights},
+		{HotelID: "H345", Name: "Kasbah Pearl", City: req.City, Currency: "EUR", Price: 132.00 + float64(m.rng.Intn(40)), Nights: req.Nights},
 	}
-	b, _ := json.Marshal(hotels)
-	var out []search.Hotel
-	_ = json.Unmarshal(b, &out)
-	return out, nil
+
+	return hotels, nil
+}
+
+func SampleLatencyFromRng(rng *rand.Rand, avg float64) time.Duration {
+	ms := float64(50) + rng.ExpFloat64()*avg*200.0
+	return time.Duration(ms) * time.Millisecond
+}
+
+func ShouldFailFromRng(rng *rand.Rand, rate float64) bool {
+	return rng.Float64() < rate
 }
