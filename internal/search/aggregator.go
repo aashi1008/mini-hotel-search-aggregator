@@ -17,18 +17,18 @@ type AggregatorService interface {
 }
 
 // Aggregator queries providers in parallel and merges results.
-type Aggregator struct {
+type aggregator struct {
 	providers []Provider
 	timeout   time.Duration
 	metrics   *obs.Metrics
 }
 
-func NewAggregator(providers []Provider, timeout time.Duration, m *obs.Metrics) *Aggregator {
-	return &Aggregator{providers: providers, timeout: timeout, metrics: m}
+func NewAggregator(providers []Provider, timeout time.Duration, m *obs.Metrics) *aggregator {
+	return &aggregator{providers: providers, timeout: timeout, metrics: m}
 }
 
 func normalizeHotel(h Hotel) (Hotel, bool) {
-	
+
 	h.HotelID = strings.TrimSpace(h.HotelID)
 	if h.HotelID == "" || h.Price <= 0 {
 		return h, false
@@ -38,7 +38,7 @@ func normalizeHotel(h Hotel) (Hotel, bool) {
 	return h, true
 }
 
-func (a *Aggregator) Search(ctx context.Context, req *models.SearchRequest) (AggregatedResult, error) {
+func (a *aggregator) Search(ctx context.Context, req *models.SearchRequest) (AggregatedResult, error) {
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, a.timeout)
 	defer cancel()

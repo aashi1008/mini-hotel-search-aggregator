@@ -6,7 +6,7 @@ import (
 )
 
 type RateLimiter interface {
-    Allow(ip string) bool
+	Allow(ip string) bool
 }
 
 // Simple token bucket per IP
@@ -15,18 +15,18 @@ type ipBucket struct {
 	lastRefill time.Time
 }
 
-type IPRateLimiter struct {
-	mu     sync.Mutex
-	buckets map[string]*ipBucket
-	cap    int
+type ipRateLimiter struct {
+	mu             sync.Mutex
+	buckets        map[string]*ipBucket
+	cap            int
 	refillDuration time.Duration
 }
 
-func NewIPRateLimiter(cap int, refill time.Duration) *IPRateLimiter {
-	return &IPRateLimiter{buckets: make(map[string]*ipBucket), cap: cap, refillDuration: refill}
+func NewIPRateLimiter(cap int, refill time.Duration) *ipRateLimiter {
+	return &ipRateLimiter{buckets: make(map[string]*ipBucket), cap: cap, refillDuration: refill}
 }
 
-func (rl *IPRateLimiter) Allow(ip string) bool {
+func (rl *ipRateLimiter) Allow(ip string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 	b, ok := rl.buckets[ip]

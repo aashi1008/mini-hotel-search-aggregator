@@ -17,10 +17,12 @@ type Handler struct {
 	ratelimiter    search.RateLimiter
 	metrics        *obs.Metrics
 	computeTimeout time.Duration
+	service        search.ServiceManagement
 }
 
 func NewHandler(agg search.AggregatorService, cache search.CacheService, rl search.RateLimiter, m *obs.Metrics) *Handler {
-	return &Handler{agg: agg, cache: cache, ratelimiter: rl, metrics: m, computeTimeout: 3 * time.Second}
+	s := search.NewService(agg, cache, m, 3*time.Second)
+	return &Handler{agg: agg, cache: cache, ratelimiter: rl, metrics: m, computeTimeout: 3 * time.Second, service: s}
 }
 
 func (h *Handler) ipFromRequest(r *http.Request) string {
@@ -67,8 +69,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//passing request to service
-	service := search.NewService(h.agg, h.cache, h.metrics, h.computeTimeout)
-	res, err := service.Search(ctx, req)
+	res, err := h.service.Search(ctx, req)
 	if err != nil {
 		InternalError(w, err.Error(), map[string]string{"request_id": reqID})
 		return
