@@ -1,7 +1,9 @@
 package app
 
 import (
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	handlers "github.com/example/mini-hotel-aggregator/internal/http"
@@ -21,6 +23,8 @@ type App struct {
 }
 
 func SetAppConfig() *App {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	providersList := []search.Provider{
 		providers.NewMockProvider("mock1", 0.2, 0.10, 0),
 		providers.NewMockProvider("mock2", 0.25, 0.12, 1),
@@ -30,11 +34,11 @@ func SetAppConfig() *App {
 	customRegistry := prometheus.NewRegistry()
 	metrics := obs.NewMetrics(customRegistry)
 	agg := search.NewAggregator(providersList, 2*time.Second, metrics)
-	cache := search.NewCache(30 * time.Second, metrics)
+	cache := search.NewCache(30*time.Second, metrics)
 	rl := search.NewIPRateLimiter(10, time.Minute)
 	h := handlers.NewHandler(agg, cache, rl, metrics)
 
-	router := routes.GetRoutes(h, metrics)
+	router := routes.GetRoutes(h, metrics, logger)
 
 	return &App{
 		Router:      router,

@@ -36,7 +36,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	h.metrics.IncRequests()
 
-	// get request id (chi's middleware.RequestID sets X-Request-Id header)
+	// chi's middleware.RequestID sets X-Request-Id header
 	reqID := r.Header.Get("X-Request-Id")
 	if reqID == "" {
 		reqID = uuid.New().String()
@@ -89,8 +89,3 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
-
-// func (h *Handler) Metrics(w http.ResponseWriter, r *http.Request) {
-// 	out := h.metrics.JSON()
-// 	WriteJSON(w, http.StatusOK, out)
-// }
