@@ -9,7 +9,7 @@ import (
 )
 
 type CacheService interface {
-    GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, error)
+	GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, error)
 }
 
 type cacheEntry struct {
@@ -24,18 +24,18 @@ type resultOrErr struct {
 	err error
 }
 
-type Cache struct {
-	mu    sync.Mutex
-	ttl   time.Duration
-	items map[string]*cacheEntry
+type cache struct {
+	mu      sync.Mutex
+	ttl     time.Duration
+	items   map[string]*cacheEntry
 	metrics *obs.Metrics
 }
 
-func NewCache(ttl time.Duration, m *obs.Metrics) *Cache {
-	return &Cache{ttl: ttl, items: make(map[string]*cacheEntry), metrics: m}
+func NewCache(ttl time.Duration, m *obs.Metrics) *cache {
+	return &cache{ttl: ttl, items: make(map[string]*cacheEntry), metrics: m}
 }
 
-func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, error) {
+func (c *cache) GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, error) {
 	c.mu.Lock()
 	entry, found := c.items[key]
 	now := time.Now()
@@ -44,7 +44,7 @@ func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx contex
 	if found && entry.ready && now.Before(entry.expiry) {
 		val := entry.val
 		c.mu.Unlock()
-		if c.metrics!=nil{
+		if c.metrics != nil {
 			c.metrics.IncCacheHits()
 		}
 		return val, nil

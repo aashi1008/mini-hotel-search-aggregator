@@ -9,15 +9,19 @@ import (
 	"github.com/example/mini-hotel-aggregator/internal/obs"
 )
 
-type Service struct {
+type ServiceManagement interface{
+	Search(ctx context.Context, req *models.SearchRequest) (AggregatedResult, error)
+}
+
+type service struct {
 	agg            AggregatorService
 	cache          CacheService
 	metrics        *obs.Metrics
 	computeTimeout time.Duration
 }
 
-func NewService(ag AggregatorService, ch CacheService, m *obs.Metrics, t time.Duration) *Service {
-	return &Service{
+func NewService(ag AggregatorService, ch CacheService, m *obs.Metrics, t time.Duration) *service {
+	return &service{
 		agg:            ag,
 		cache:          ch,
 		metrics:        m,
@@ -25,7 +29,7 @@ func NewService(ag AggregatorService, ch CacheService, m *obs.Metrics, t time.Du
 	}
 }
 
-func (s *Service) Search(ctx context.Context, req *models.SearchRequest) (AggregatedResult, error) {
+func (s *service) Search(ctx context.Context, req *models.SearchRequest) (AggregatedResult, error) {
 	cacheKey := fmt.Sprintf("%s|%s|%d|%d", req.City, req.Checkin, req.Nights, req.Adults)
 
 	// compute with per-request timeout
