@@ -71,6 +71,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	res, err := service.Search(ctx, req)
 	if err != nil {
 		InternalError(w, err.Error(), map[string]string{"request_id": reqID})
+		return
 	}
 
 	out := map[string]any{
