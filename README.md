@@ -55,6 +55,19 @@ go run ./cmd/server
 ---
 Server runs on: [http://localhost:8080](http://localhost:8080)
 
+### 3. Run with Docker
+---
+
+---
+```go
+docker build -t mini-hotel-aggregator .
+
+docker run -d \
+  -p 8080:8080 \
+  --name mini-hotel mini-hotel-aggregator
+```
+---
+
 ## 🔍 API Reference
 
 ### 1. Search Hotels
@@ -146,7 +159,7 @@ Metrics scraped by Prometheus and visualized in Grafana.
 
 ## 🔧 Extending the Project
 
-- **Add a real provider:** Implement the `Provider` interface, register in `internal/app/config.go`.
+- **Add a real provider:** Implement the `Provider` interface, register in `internal/app/app.go`.
 - **New filters or features:** Add logic inside `internal/search/`.
 - **Additional metrics:** Register collectors in `internal/obs/metrics.go`.
 - **OpenAPI Spec:** (Optional) Document API with Swagger or similar.

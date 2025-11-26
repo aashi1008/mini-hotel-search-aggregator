@@ -16,9 +16,9 @@ import (
 
 type App struct {
 	Router      http.Handler
-	Aggregator  *search.Aggregator
-	Cache       *search.Cache
-	RateLimiter *search.IPRateLimiter
+	Aggregator  search.AggregatorService
+	Cache       search.CacheService
+	RateLimiter search.RateLimiter
 	Metrics     *obs.Metrics
 }
 

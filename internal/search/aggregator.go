@@ -24,11 +24,6 @@ type Aggregator struct {
 }
 
 func NewAggregator(providers []Provider, timeout time.Duration, m *obs.Metrics) *Aggregator {
-	for _, p := range providers {
-		providerName := p.Name()
-		m.ProviderLatency.WithLabelValues(providerName)
-		m.ProviderErrors.WithLabelValues(providerName)
-	}
 	return &Aggregator{providers: providers, timeout: timeout, metrics: m}
 }
 
