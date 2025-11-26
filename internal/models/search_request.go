@@ -16,8 +16,7 @@ type SearchRequest struct {
 	Adults  int
 }
 
-// Constructor from raw query strings.
-// Keeps handler thin & consistent.
+
 func NewSearchRequest(city, checkin, nights, adults string) (*SearchRequest, error) {
 	if city == "" || checkin == "" || nights == "" || adults == "" {
 		return nil, fmt.Errorf("missing required params")

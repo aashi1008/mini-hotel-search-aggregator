@@ -33,7 +33,7 @@ func (s *Service) Search(ctx context.Context, req *models.SearchRequest) (Aggreg
 	defer cancel()
 
 	res, cacheHit := s.cache.GetOrCompute(cctx, cacheKey, func(ctx context.Context) (AggregatedResult, error) {
-		return s.agg.Search(ctx, req.City, req.Checkin, req.Nights, req.Adults)
+		return s.agg.Search(ctx, req)
 	})
 	if cacheHit {
 		s.metrics.IncCacheHits()

@@ -8,8 +8,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/example/mini-hotel-aggregator/internal/models"
 	"github.com/example/mini-hotel-aggregator/internal/obs"
 )
+
+type AggregatorService interface {
+	Search(ctx context.Context, req *models.SearchRequest) (AggregatedResult, error)
+}
 
 // Aggregator queries providers in parallel and merges results.
 type Aggregator struct {
@@ -20,10 +25,10 @@ type Aggregator struct {
 
 func NewAggregator(providers []Provider, timeout time.Duration, m *obs.Metrics) *Aggregator {
 	for _, p := range providers {
-        providerName := p.Name()
-        m.ProviderLatency.WithLabelValues(providerName)
-        m.ProviderErrors.WithLabelValues(providerName)
-    }
+		providerName := p.Name()
+		m.ProviderLatency.WithLabelValues(providerName)
+		m.ProviderErrors.WithLabelValues(providerName)
+	}
 	return &Aggregator{providers: providers, timeout: timeout, metrics: m}
 }
 
@@ -38,7 +43,7 @@ func normalizeHotel(h Hotel) (Hotel, bool) {
 	return h, true
 }
 
-func (a *Aggregator) Search(ctx context.Context, city, checkin string, nights, adults int) (AggregatedResult, error) {
+func (a *Aggregator) Search(ctx context.Context, req *models.SearchRequest) (AggregatedResult, error) {
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, a.timeout)
 	defer cancel()
@@ -64,10 +69,10 @@ func (a *Aggregator) Search(ctx context.Context, city, checkin string, nights, a
 				}
 			}()
 			start := time.Now()
-			hs, err := pr.Search(ctx, city, checkin, nights, adults)
+			hs, err := pr.Search(ctx, req)
 			duration := time.Since(start).Seconds()
 			a.metrics.ObserveProviderLatency(pr.Name(), duration)
-		
+
 			if err != nil {
 				a.metrics.IncProviderFailure(pr.Name())
 				// non-blocking send

@@ -6,13 +6,15 @@ import (
 	"time"
 )
 
-// simple in-memory cache with TTL and request coalescing (singleflight style)
+type CacheService interface {
+    GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, bool)
+}
 
 type cacheEntry struct {
-	val       AggregatedResult
-	expiry    time.Time
-	ready     bool
-	waiters   []chan resultOrErr
+	val     AggregatedResult
+	expiry  time.Time
+	ready   bool
+	waiters []chan resultOrErr
 }
 
 type resultOrErr struct {
@@ -30,18 +32,22 @@ func NewCache(ttl time.Duration) *Cache {
 	return &Cache{ttl: ttl, items: make(map[string]*cacheEntry)}
 }
 
-// GetOrCompute returns cached result if fresh, otherwise runs fn once and collapses concurrent calls.
 func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, bool) {
 	c.mu.Lock()
-	if e, ok := c.items[key]; ok && time.Now().Before(e.expiry) && e.ready {
-		val := e.val
+	entry, found := c.items[key]
+	now := time.Now()
+
+	// If cached and fresh, return it
+	if found && entry.ready && now.Before(entry.expiry) {
+		val := entry.val
 		c.mu.Unlock()
 		return val, true
 	}
-	// if an in-flight entry exists, join its waiters
-	if e, ok := c.items[key]; ok && !e.ready {
+
+	// Collapse: if computation in progress, join waiters
+	if found && !entry.ready {
 		ch := make(chan resultOrErr, 1)
-		e.waiters = append(e.waiters, ch)
+		entry.waiters = append(entry.waiters, ch)
 		c.mu.Unlock()
 		select {
 		case <-ctx.Done():
@@ -50,30 +56,28 @@ func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx contex
 			return r.res, r.err == nil
 		}
 	}
-	// no entry or expired: start a new computation and mark as in-flight
+
+	// Start new computation and mark as in-flight
 	ch := make(chan resultOrErr, 1)
-	entry := &cacheEntry{waiters: []chan resultOrErr{ch}}
+	entry = &cacheEntry{waiters: []chan resultOrErr{ch}}
 	c.items[key] = entry
 	c.mu.Unlock()
 
+	// Actual computation (only one goroutine does this)
 	res, err := fn(ctx)
+	result := resultOrErr{res: res, err: err}
 
-	r := resultOrErr{res: res, err: err}
-
+	// Save result and notify waiters
 	c.mu.Lock()
-	entry, _ = c.items[key]
 	entry.val = res
-	entry.expiry = time.Now().Add(c.ttl)
+	entry.expiry = now.Add(c.ttl)
 	entry.ready = true
-	ws := entry.waiters
+	waiters := entry.waiters
 	entry.waiters = nil
 	c.mu.Unlock()
 
-	for _, w := range ws {
-		select {
-		case w <- r:
-		default:
-		}
+	for _, w := range waiters {
+		w <- result
 		close(w)
 	}
 
