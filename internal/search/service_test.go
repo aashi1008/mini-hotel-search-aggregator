@@ -3,6 +3,7 @@ package search_test
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,10 +16,16 @@ import (
 // --- Mock implementations ---
 
 type mockAggregator struct {
+	mu         sync.Mutex
+	counter    int
 	searchFunc func(ctx context.Context, req *models.SearchRequest) (search.AggregatedResult, error)
 }
 
 func (m *mockAggregator) Search(ctx context.Context, req *models.SearchRequest) (search.AggregatedResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.counter++
+
 	if m.searchFunc != nil {
 		return m.searchFunc(ctx, req)
 	}
@@ -158,10 +165,9 @@ func TestService_Search_ConcurrentRequests(t *testing.T) {
 			return fn(ctx)
 		},
 	}
-	callCount := 0
+
 	agg := &mockAggregator{
 		searchFunc: func(ctx context.Context, req *models.SearchRequest) (search.AggregatedResult, error) {
-			callCount++
 			return search.AggregatedResult{
 				Hotels: []search.Hotel{{HotelID: "H1", Name: "A", Price: 50, Nights: req.Nights}},
 			}, nil
@@ -182,7 +188,7 @@ func TestService_Search_ConcurrentRequests(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		<-done
 	}
-	if callCount != 5 {
-		t.Fatalf("expected aggregator to be called 5 times (no caching collapse here), got %d", callCount)
+	if agg.counter != 5 {
+		t.Fatalf("expected aggregator to be called 5 times (no caching collapse here), got %d", agg.counter)
 	}
 }

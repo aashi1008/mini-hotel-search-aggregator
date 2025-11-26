@@ -33,7 +33,6 @@ func (h *Handler) ipFromRequest(r *http.Request) string {
 
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	start := time.Now()
 	h.metrics.IncRequests()
 
 	// chi's middleware.RequestID sets X-Request-Id header
@@ -72,10 +71,6 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		InternalError(w, err.Error(), map[string]string{"request_id": reqID})
 	}
-
-	// Record total request duration
-	h.metrics.HTTPRequestDuration.WithLabelValues(r.Method, r.URL.Path, "200").
-		Observe(time.Since(start).Seconds())
 
 	out := map[string]any{
 		"search": map[string]any{"city": req.City, "checkin": req.Checkin, "nights": req.Nights, "adults": req.Adults},

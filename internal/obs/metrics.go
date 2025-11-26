@@ -92,6 +92,14 @@ func (m *Metrics) IncProviderFailure(provider string) {
 	m.ProviderErrors.WithLabelValues(provider).Inc()
 }
 
+func (m *Metrics) ObserveHTTPRequestDuration(method string, path string, status string, seconds float64) {
+	m.HTTPRequestDuration.WithLabelValues(method, path, status).Observe(seconds)
+}
+
+func (m *Metrics) IncHTTPRequestsTotal(method string, path string, status string) {
+	m.HTTPRequestsTotal.WithLabelValues(method, path, status).Inc()
+}
+
 func (m *Metrics) Handler() http.Handler {
 	return promhttp.HandlerFor(m.Registry, promhttp.HandlerOpts{})
 }

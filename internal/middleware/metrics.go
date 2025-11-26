@@ -30,8 +30,8 @@ func MetricsMiddleware(m *obs.Metrics) func(http.Handler) http.Handler {
 			method := r.Method
 			path := r.URL.Path
 
-			m.HTTPRequestsTotal.WithLabelValues(method, path, status).Inc()
-			m.HTTPRequestDuration.WithLabelValues(method, path, status).Observe(time.Since(start).Seconds())
+			m.IncHTTPRequestsTotal(method, path, status)
+			m.ObserveHTTPRequestDuration(method, path, status, time.Since(start).Seconds())
 		}
 
 		return http.HandlerFunc(fn)
