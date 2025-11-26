@@ -10,13 +10,13 @@ import (
 )
 
 type Service struct {
-	agg            *Aggregator
-	cache          *Cache
+	agg            AggregatorService
+	cache          CacheService
 	metrics        *obs.Metrics
 	computeTimeout time.Duration
 }
 
-func NewService(ag *Aggregator, ch *Cache, m *obs.Metrics, t time.Duration) *Service {
+func NewService(ag AggregatorService, ch CacheService, m *obs.Metrics, t time.Duration) *Service {
 	return &Service{
 		agg:            ag,
 		cache:          ch,
@@ -32,11 +32,11 @@ func (s *Service) Search(ctx context.Context, req *models.SearchRequest) (Aggreg
 	cctx, cancel := context.WithTimeout(ctx, s.computeTimeout)
 	defer cancel()
 
-	res, cacheHit := s.cache.GetOrCompute(cctx, cacheKey, func(ctx context.Context) (AggregatedResult, error) {
+	res, err := s.cache.GetOrCompute(cctx, cacheKey, func(ctx context.Context) (AggregatedResult, error) {
 		return s.agg.Search(ctx, req)
 	})
-	if cacheHit {
-		s.metrics.IncCacheHits()
+	if err != nil {
+		return AggregatedResult{}, err
 	}
 
 	return res, nil

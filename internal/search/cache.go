@@ -4,10 +4,12 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/example/mini-hotel-aggregator/internal/obs"
 )
 
 type CacheService interface {
-    GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, bool)
+    GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, error)
 }
 
 type cacheEntry struct {
@@ -26,13 +28,14 @@ type Cache struct {
 	mu    sync.Mutex
 	ttl   time.Duration
 	items map[string]*cacheEntry
+	metrics *obs.Metrics
 }
 
-func NewCache(ttl time.Duration) *Cache {
-	return &Cache{ttl: ttl, items: make(map[string]*cacheEntry)}
+func NewCache(ttl time.Duration, m *obs.Metrics) *Cache {
+	return &Cache{ttl: ttl, items: make(map[string]*cacheEntry), metrics: m}
 }
 
-func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, bool) {
+func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx context.Context) (AggregatedResult, error)) (AggregatedResult, error) {
 	c.mu.Lock()
 	entry, found := c.items[key]
 	now := time.Now()
@@ -41,7 +44,10 @@ func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx contex
 	if found && entry.ready && now.Before(entry.expiry) {
 		val := entry.val
 		c.mu.Unlock()
-		return val, true
+		if c.metrics!=nil{
+			c.metrics.IncCacheHits()
+		}
+		return val, nil
 	}
 
 	// Collapse: if computation in progress, join waiters
@@ -51,9 +57,9 @@ func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx contex
 		c.mu.Unlock()
 		select {
 		case <-ctx.Done():
-			return AggregatedResult{}, false
+			return AggregatedResult{}, ctx.Err()
 		case r := <-ch:
-			return r.res, r.err == nil
+			return r.res, r.err
 		}
 	}
 
@@ -81,5 +87,5 @@ func (c *Cache) GetOrCompute(ctx context.Context, key string, fn func(ctx contex
 		close(w)
 	}
 
-	return res, err == nil
+	return res, err
 }

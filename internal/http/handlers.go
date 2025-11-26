@@ -12,14 +12,14 @@ import (
 )
 
 type Handler struct {
-	agg            *search.Aggregator
-	cache          *search.Cache
-	ratelimiter    *search.IPRateLimiter
+	agg            search.AggregatorService
+	cache          search.CacheService
+	ratelimiter    search.RateLimiter
 	metrics        *obs.Metrics
 	computeTimeout time.Duration
 }
 
-func NewHandler(agg *search.Aggregator, cache *search.Cache, rl *search.IPRateLimiter, m *obs.Metrics) *Handler {
+func NewHandler(agg search.AggregatorService, cache search.CacheService, rl search.RateLimiter, m *obs.Metrics) *Handler {
 	return &Handler{agg: agg, cache: cache, ratelimiter: rl, metrics: m, computeTimeout: 3 * time.Second}
 }
 

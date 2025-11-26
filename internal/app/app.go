@@ -30,7 +30,7 @@ func SetAppConfig() *App {
 	customRegistry := prometheus.NewRegistry()
 	metrics := obs.NewMetrics(customRegistry)
 	agg := search.NewAggregator(providersList, 2*time.Second, metrics)
-	cache := search.NewCache(30 * time.Second)
+	cache := search.NewCache(30 * time.Second, metrics)
 	rl := search.NewIPRateLimiter(10, time.Minute)
 	h := handlers.NewHandler(agg, cache, rl, metrics)
 
