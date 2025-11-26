@@ -13,7 +13,6 @@ func WriteError(w http.ResponseWriter, status int, msg string, meta map[string]s
     WriteJSON(w, status, ErrorResponse{Error: msg, Meta: meta})
 }
 
-// shortcuts
 func BadRequest(w http.ResponseWriter, msg string, meta map[string]string) {
     WriteError(w, http.StatusBadRequest, msg, meta)
 }

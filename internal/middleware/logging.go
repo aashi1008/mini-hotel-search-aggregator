@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-// LoggingMiddleware logs basic request info (request-id, method, path, duration).
+// LoggingMiddleware logs basic request info (request-id, method, path, status, duration).
 func LoggingMiddleware(logger *slog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +28,7 @@ func LoggingMiddleware(logger *slog.Logger) func(next http.Handler) http.Handler
 			}
 			next.ServeHTTP(rec, r)
 			duration := time.Since(start)
-			//log.Printf("%s %s %s %v", rid, r.Method, r.URL.Path, time.Since(start))
+			
 			logger.Info("request completed",
 				"request_id", rid,
 				"method", r.Method,

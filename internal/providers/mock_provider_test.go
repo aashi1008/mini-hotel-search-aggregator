@@ -10,7 +10,7 @@ import (
 	"github.com/example/mini-hotel-aggregator/internal/providers"
 )
 
-// helper to create a deterministic MockProvider
+
 func newTestProvider() *providers.MockProvider {
 	return providers.NewMockProvider("mock1", 0.1, 0.0, 0)
 }
@@ -49,7 +49,7 @@ func TestMockProvider_Search_Positive(t *testing.T) {
 }
 
 func TestMockProvider_Search_Failure(t *testing.T) {
-	p := providers.NewMockProvider("mock-fail", 0.0, 1.0, 0) // failRate 100%
+	p := providers.NewMockProvider("mock-fail", 0.0, 1.0, 0) 
 
 	req := &models.SearchRequest{City: "Paris", Checkin: "2025-12-01", Nights: 2, Adults: 2}
 	ctx := context.Background()
