@@ -74,7 +74,7 @@ func TestAggregator_NormalizesAndDeduplicates(t *testing.T) {
 	if res.Hotels[0].HotelID != "H1" || res.Hotels[0].Price != 75 {
 		t.Errorf("expected H1 with price 75, got %+v", res.Hotels[0])
 	}
-	// assert dropped invalid/negative/missing ID hotels
+	
 	for _, h := range res.Hotels {
 		if h.Price <= 0 || h.HotelID == "" {
 			t.Errorf("should not have invalid hotel %+v", h)

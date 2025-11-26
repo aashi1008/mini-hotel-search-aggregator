@@ -28,7 +28,7 @@ func NewAggregator(providers []Provider, timeout time.Duration, m *obs.Metrics) 
 }
 
 func normalizeHotel(h Hotel) (Hotel, bool) {
-	// basic validation: must have id and price
+	
 	h.HotelID = strings.TrimSpace(h.HotelID)
 	if h.HotelID == "" || h.Price <= 0 {
 		return h, false
@@ -44,7 +44,7 @@ func (a *Aggregator) Search(ctx context.Context, req *models.SearchRequest) (Agg
 	defer cancel()
 
 	resCh := make(chan ProviderResult, len(a.providers))
-	errCh := make(chan struct{}, len(a.providers)) // we only count failures
+	errCh := make(chan struct{}, len(a.providers)) // only count failures
 	var wg sync.WaitGroup
 	for _, p := range a.providers {
 		wg.Add(1)
@@ -122,7 +122,6 @@ func (a *Aggregator) Search(ctx context.Context, req *models.SearchRequest) (Agg
 			// treat remaining as failed
 			if resCh != nil || errCh != nil {
 				// count remaining providers that didn't respond as failures
-				// totalFailed = totalProviders - succeeded (we already count some failures)
 				remaining := len(a.providers) - (providersSucceeded + providersFailed)
 				if remaining > 0 {
 					providersFailed += remaining

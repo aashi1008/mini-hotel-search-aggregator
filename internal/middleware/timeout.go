@@ -6,8 +6,7 @@ import (
 	"time"
 )
 
-// TimeoutMiddleware adds a context with timeout to each request. Typical usage:
-// r.Use(TimeoutMiddleware(10 * time.Second))
+// TimeoutMiddleware adds a context with timeout to each request.
 func TimeoutMiddleware(d time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {

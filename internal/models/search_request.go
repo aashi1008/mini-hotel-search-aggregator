@@ -44,7 +44,7 @@ func (r *SearchRequest) Validate() error {
 	if err != nil {
 		errs = append(errs, err.Error())
 	} else {
-		r.City = city // normalized
+		r.City = city 
 	}
 
 	_, err = validator.ValidateDate(r.Checkin)

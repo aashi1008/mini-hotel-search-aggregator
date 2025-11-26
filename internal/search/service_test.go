@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// --- Mock implementations ---
 
 type mockAggregator struct {
 	mu         sync.Mutex
@@ -42,8 +41,6 @@ func (m *mockCache) GetOrCompute(ctx context.Context, key string, fn func(ctx co
 	}
 	return fn(ctx)
 }
-
-// --- Test cases ---
 
 func TestService_Search_Success(t *testing.T) {
 	cacheCalled := false

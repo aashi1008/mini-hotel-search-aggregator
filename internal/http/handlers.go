@@ -66,6 +66,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//passing request to service
 	service := search.NewService(h.agg, h.cache, h.metrics, h.computeTimeout)
 	res, err := service.Search(ctx, req)
 	if err != nil {

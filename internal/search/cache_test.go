@@ -15,7 +15,6 @@ func TestCacheCollapse(t *testing.T) {
 	calls := 0
 	fn := func(ctx context.Context) (AggregatedResult, error) {
 		calls++
-		// simulate some work
 		time.Sleep(50 * time.Millisecond)
 		return AggregatedResult{}, nil
 	}

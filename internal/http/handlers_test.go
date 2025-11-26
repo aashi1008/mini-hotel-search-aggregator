@@ -16,7 +16,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// ------------------------ MOCKS ------------------------
 type mockAggregator struct {
 	searchFunc func(ctx context.Context, req *models.SearchRequest) (search.AggregatedResult, error)
 }
@@ -40,8 +39,6 @@ type mockRateLimiter struct {
 func (m *mockRateLimiter) Allow(ip string) bool {
 	return m.allowFunc(ip)
 }
-
-// -------------------------------------------------------
 
 func TestHandler_Search_Positive(t *testing.T) {
 	cache := &mockCache{
@@ -199,13 +196,11 @@ func TestHandler_Search_CacheHit(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", resp.StatusCode)
 	}
 
-	// basic JSON check
 	var out map[string]any
 	if err := json.Unmarshal(body, &out); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
 
-	// check search info
 	searchMap, ok := out["search"].(map[string]any)
 	if !ok {
 		t.Fatal("missing search field")
@@ -214,7 +209,6 @@ func TestHandler_Search_CacheHit(t *testing.T) {
 		t.Errorf("expected city abc, got %v", searchMap["city"])
 	}
 
-	// check hotels
 	hotels, ok := out["hotels"].([]any)
 	if !ok || len(hotels) != 1 {
 		t.Fatalf("expected 1 hotel, got %+v", hotels)
@@ -227,5 +221,3 @@ func TestHandler_Search_CacheHit(t *testing.T) {
 		t.Fatal("expected cache GetOrCompute to be called")
 	}
 }
-
-// You can add more table-driven tests for request ID, malformed RemoteAddr, etc.
